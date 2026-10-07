@@ -78,7 +78,7 @@ $(document).ready(() => {
       "HtmlPart": window.codeMirrorEditor.getValue(),
       "SubjectPart": $('#templateSubject').val(),
       "TextPart": $('#templateText').val(),
-      "region": localStorage.getItem('region')
+      ...awsContext
     };
 
     $.ajax({

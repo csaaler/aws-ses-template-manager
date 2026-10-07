@@ -21,5 +21,5 @@ if (!LOOPBACK_HOSTNAMES.includes(host)) {
 }
 
 createApp({ allowedHostnames }).listen(port, host, () => {
-  console.log(`AWS SES Template Manager running at http://${host}:${port} (AWS profile '${process.env.AWS_PROFILE_NAME || 'default'}')`);
+  console.log(`AWS SES Template Manager running at http://${host}:${port} (default AWS profile '${process.env.AWS_PROFILE_NAME || 'default'}')`);
 });

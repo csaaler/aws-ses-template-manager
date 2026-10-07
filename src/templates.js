@@ -12,6 +12,7 @@ const {
 } = require('@aws-sdk/client-ses');
 const { getSesClient } = require('./ses');
 const { isValidRegion } = require('./security');
+const { listProfiles, defaultProfile, isKnownProfile } = require('./profiles');
 
 function getDynamicFields(contentStr) {
   // a helper function which will convert a string into an array of any mustache dynamic fields
@@ -26,14 +27,21 @@ function getDynamicFields(contentStr) {
   return dynamicFieldsArr;
 }
 
-// Resolves the SES client for the region sent by the client (query string for GET/DELETE, body otherwise)
+// Resolves the SES client for the region and profile sent by the client (query string for GET/DELETE, body otherwise).
+// A missing or empty profile means the default profile from .env.
 function sesFor(req, res) {
-  const region = req.method === 'GET' || req.method === 'DELETE' ? req.query.region : req.body?.region;
+  const params = (req.method === 'GET' || req.method === 'DELETE' ? req.query : req.body) || {};
+  const { region } = params;
+  const profile = params.profile || defaultProfile();
   if (!isValidRegion(region)) {
     res.status(400).json({ code: 'InvalidRegion', message: `Invalid AWS region '${region}'` });
     return null;
   }
-  return getSesClient(region);
+  if (!isKnownProfile(profile)) {
+    res.status(400).json({ code: 'InvalidProfile', message: `Unknown AWS profile '${profile}'` });
+    return null;
+  }
+  return getSesClient(region, profile);
 }
 
 function templateFromBody(body) {
@@ -46,6 +54,10 @@ function templateFromBody(body) {
 }
 
 const router = express.Router();
+
+router.get('/profiles', (req, res) => {
+  res.json({ profiles: listProfiles(), defaultProfile: defaultProfile() });
+});
 
 router.get('/list-templates', async (req, res) => {
   const ses = sesFor(req, res);

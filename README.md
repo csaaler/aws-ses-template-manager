@@ -42,7 +42,7 @@ Create/Update template:
 - Ensure to have [setup your AWS credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html) on your machine.
 - git clone this project repo.
 - ```npm install```
-- Ensure 'AWS_PROFILE_NAME' within the **.env file** is set to your desired aws named profile. Also ensure for the named profile chosen that all applicable permissions are granted to allow for creating, retrieving, updating, deleting and sending SES templates.
+- Ensure 'AWS_PROFILE_NAME' within the **.env file** is set to the aws named profile the app should start with (optional, falls back to `default`). You can switch to any other profile from `~/.aws/config` or `~/.aws/credentials` with the profile dropdown in the page header. Also ensure for the named profile chosen that all applicable permissions are granted to allow for creating, retrieving, updating, deleting and sending SES templates.
 - ```npm start``` will run the application (```npm run dev``` restarts it on file changes).
 - ```npm test``` runs the test suite, and ```npm run dev:mock``` runs the app against an in-memory fake SES (no AWS access needed).
 
@@ -57,7 +57,7 @@ Keep `HOST=127.0.0.1`, and use an AWS profile limited to the SES template permis
 ## How to use
 Once installation steps have been followed, navigate to http://127.0.0.1:3333 (host and port can be changed via the .env file if required).
 
-The index page will show a table of existing SES templates in your selected region using the AWS named profile specified in the .env file. You can further go ahead and either delete
+The index page will show a table of existing SES templates in your selected region using the AWS profile selected in the page header. You can further go ahead and either delete
 or edit an SES template from this same table.
 
 ## Staying up to date

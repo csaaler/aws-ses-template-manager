@@ -2,17 +2,15 @@
 
 const { SESClient } = require('@aws-sdk/client-ses');
 
-// One client per region, all sharing the named profile from .env
+// One client per profile and region
 const clients = new Map();
 
-function getSesClient(region) {
-  if (!clients.has(region)) {
-    clients.set(region, new SESClient({
-      region,
-      profile: process.env.AWS_PROFILE_NAME || 'default'
-    }));
+function getSesClient(region, profile) {
+  const key = `${profile}\n${region}`;
+  if (!clients.has(key)) {
+    clients.set(key, new SESClient({ region, profile }));
   }
-  return clients.get(region);
+  return clients.get(key);
 }
 
 // The frontend reads `code` and `message` from error responses (the shape aws-sdk v2 errors serialized to)

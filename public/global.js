@@ -9,12 +9,23 @@ function escapeHtml(value) {
     .replace(/'/g, '&#39;');
 }
 
-function regionQuery() {
-  return `region=${encodeURIComponent(localStorage.getItem('region'))}`;
+if (!localStorage.getItem('region')) {
+  localStorage.setItem('region', 'us-east-1');  //default region if none set
+}
+
+// The AWS context is read once per page load, so every request from this tab targets the account and region
+// its header shows, even if another tab switches them. An empty profile means the server's default from .env.
+const awsContext = Object.freeze({
+  region: localStorage.getItem('region'),
+  profile: localStorage.getItem('profile') || ''
+});
+
+function contextQuery() {
+  return new URLSearchParams(awsContext).toString();
 }
 
 function templateUrl(path, templateName) {
-  return `${path}/${encodeURIComponent(templateName)}?${regionQuery()}`;
+  return `${path}/${encodeURIComponent(templateName)}?${contextQuery()}`;
 }
 
 function populateTextSectionContent() {
@@ -44,7 +55,48 @@ $(document).ready(() => {
     e.preventDefault();
     populateTextSectionContent();
   });
+
+  initContextBar();
 });
+
+// Header context: shows the region and lets the user switch the AWS profile after confirming
+function initContextBar() {
+  const $selector = $('#profileSelector');
+  $('#contextRegion').text(awsContext.region);
+
+  $.get('/profiles', ({ profiles, defaultProfile }) => {
+    const current = awsContext.profile || defaultProfile;
+    const names = profiles.includes(current) ? profiles : [current, ...profiles];
+    $selector.empty().append(names.map((name) => $('<option>').val(name).text(
+      name === defaultProfile ? `${name} (.env default)` : profiles.includes(name) ? name : `${name} (not found)`
+    )));
+    $selector.val(current).prop('disabled', false).attr('data-current', current);
+  }).fail(() => {
+    $selector.empty().append($('<option>').text(awsContext.profile || 'default'));
+  });
+
+  $selector.on('change', function () {
+    $('#switchProfileFrom').text($selector.attr('data-current'));
+    $('#switchProfileTo').text($selector.val());
+    $('#switchProfileModal').modal('show');
+  });
+
+  // any way of closing the modal other than confirming puts the dropdown back
+  $('#switchProfileModal').on('hidden.bs.modal', () => $selector.val($selector.attr('data-current')));
+
+  $('#switchProfileCta').on('click', () => {
+    localStorage.setItem('profile', $selector.val());
+    window.location.reload();
+  });
+
+  window.addEventListener('storage', (e) => {
+    if (e.key !== 'profile' && e.key !== 'region') return;
+    const changed = localStorage.getItem('profile') !== (awsContext.profile || null)
+      || localStorage.getItem('region') !== awsContext.region;
+    $('#contextChangedAlert').toggleClass('d-none', !changed);
+  });
+  $('#contextReloadCta').on('click', () => window.location.reload());
+}
 
 (async function () {
   const versionChecked = sessionStorage.getItem('versionChecked');

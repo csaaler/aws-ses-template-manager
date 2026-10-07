@@ -1,9 +1,5 @@
 $(document).ready(() => {
-  const region = localStorage.getItem('region');
-  if (!region) {
-    window.location.href = '/';  // the region is chosen on the templates page
-    return;
-  }
+  const { region } = awsContext;
 
   const { validateTemplateFile, rowStatuses, summarize } = window.ImportValidation;
 
@@ -15,7 +11,7 @@ $(document).ready(() => {
 
   $('#importRegion').text(region);
 
-  $.get(`/list-templates?${regionQuery()}`, (data) => {
+  $.get(`/list-templates?${contextQuery()}`, (data) => {
     existingNames = new Set(data.items.TemplatesMetadata.map((t) => t.Name));
     refreshStatuses();
   }).fail((xhr) => {
@@ -162,7 +158,7 @@ $(document).ready(() => {
         type,
         url,
         contentType: 'application/json',
-        data: JSON.stringify({ ...template, region })
+        data: JSON.stringify({ ...template, ...awsContext })
       }).done(() => resolve({ ok: true })).fail((xhr) => resolve({
         ok: false,
         code: xhr.responseJSON?.code,

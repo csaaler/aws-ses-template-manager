@@ -38,3 +38,8 @@
   min-height: 150px;
   border: 1px solid #e6e6e6;
 }
+
+.aws-context .custom-select {
+  width: auto;
+  max-width: 220px;
+}

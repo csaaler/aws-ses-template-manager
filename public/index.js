@@ -1,9 +1,5 @@
 $(document).ready(() => {
-  if (!localStorage.getItem('region')) {
-    localStorage.setItem('region', 'us-east-1');  //default region if none set
-  } else {
-    $('#regionSelector').val(localStorage.getItem('region')); //always ensure the select region dropdown matches localstorage region
-  }
+  $('#regionSelector').val(awsContext.region); //always ensure the select region dropdown matches the page's region
 
   // apply region select listener
   $('#regionSelector').change(function () {
@@ -13,7 +9,7 @@ $(document).ready(() => {
   });
 
   // get templates and build table
-  $.get(`/list-templates?${regionQuery()}`, function (data) {
+  $.get(`/list-templates?${contextQuery()}`, function (data) {
     const templatesArr = data.items.TemplatesMetadata;
 
     if (templatesArr.length === 0) {
@@ -183,7 +179,7 @@ function sendEmailSubmission(e, form){
     });
   }
 
-  $.post(`/send-template`, { templateName, source, templateData: JSON.stringify(dynamicFieldPayload), toAddress, region: localStorage.getItem('region')}, (response) => {
+  $.post(`/send-template`, { templateName, source, templateData: JSON.stringify(dynamicFieldPayload), toAddress, ...awsContext}, (response) => {
     // show confirmation content
     $('#sendTestEmailModal #errorOutput').addClass('d-none');
     $('#sendTestEmailModal #confirmationText #sentTime').text(new Date());

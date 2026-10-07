@@ -9,10 +9,10 @@ A local GUI for managing AWS SES email templates (list, create, update, delete, 
 ## Commands
 
 - `npm start`: runs the app at http://127.0.0.1:3333. `npm run dev` does the same and restarts on file changes.
-- `npm run dev:mock`: runs the app against an in-memory fake SES (`test/support/fake-ses.js`), so no AWS calls are made. Use it for any manual or browser testing. It seeds a "hostile" template with XSS payloads; a successful exploit sets `window.__pwned`.
+- `npm run dev:mock`: runs the app against an in-memory fake SES (`test/support/fake-ses.js`), so no AWS calls are made. Use it for any manual or browser testing. It points `AWS_CONFIG_FILE` and `AWS_SHARED_CREDENTIALS_FILE` at fake profiles and seeds a "hostile" template with XSS payloads; a successful exploit sets `window.__pwned`.
 - `npm test`: runs all tests (`node --test test/*.test.js`). For a single file: `node --test test/api.test.js`. For a single test: add `--test-name-pattern="<regex>"`.
 
-Configuration lives in `.env`, which is loaded with `process.loadEnvFile`. It sets `HOST`, `PORT`, `AWS_PROFILE_NAME` and `ALLOWED_HOSTS`. Running with `npm start` talks to the real AWS SES with the named profile, and sends and deletes are live.
+Configuration lives in `.env`, which is loaded with `process.loadEnvFile`. It sets `HOST`, `PORT`, `AWS_PROFILE_NAME` (the default profile, which can be switched in the UI) and `ALLOWED_HOSTS`. Running with `npm start` talks to the real AWS SES with the selected profile, and sends and deletes are live.
 
 ## Architecture
 
@@ -27,7 +27,7 @@ Configuration lives in `.env`, which is loaded with `process.loadEnvFile`. It se
 
 The API URLs match what the frontend calls (`/list-templates`, `/get-template/:name`, etc.). Errors come back as `{code, message}`, which the frontend reads.
 
-**Region is per request, chosen by the client.** The client keeps the selected region in `localStorage.region`. Every API call sends it as a query param (GET/DELETE) or a body field (POST/PUT). `sesFor()` validates it and returns a cached `SESClient` for that region (`src/ses.js`).
+**Region and profile are per request, chosen by the client.** The client keeps them in `localStorage.region` and `localStorage.profile`. `global.js` reads both once per page load into `awsContext`, so a tab keeps acting on the account its header shows even if another tab switches. If that happens, a banner tells the user to reload. Every API call sends both as query params (GET/DELETE, via `contextQuery()`/`templateUrl`) or body fields (POST/PUT, via `...awsContext`). `sesFor()` validates them and returns a cached `SESClient` per profile and region (`src/ses.js`). An empty profile means `AWS_PROFILE_NAME`. Profiles are listed from `~/.aws/config` and `~/.aws/credentials` by `src/profiles.js` (served at `/profiles`), and only listed profiles or the `.env` default are accepted. The header (`views/partials/header.html`) shows the profile dropdown and region on every page, and switching asks for confirmation in a modal.
 
 **Views.** `views/*.html` are rendered once and cached by `src/views.js`, which supports `{{> partial}}` includes and `{{ var }}` substitution. The only per-page variables are the template form settings in `TEMPLATE_FORMS`. CodeMirror is served from `node_modules/codemirror` at `/plugins/codemirror`.
 
