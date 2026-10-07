@@ -35,6 +35,7 @@ The API URLs match what the frontend calls (`/list-templates`, `/get-template/:n
 - `global.js` holds the shared helpers: `escapeHtml`, `templateUrl`, `setTemplatePreview` and `populateTextSectionContent`. It also runs a GitHub version check against the hardcoded `currentVersion`.
 - `index.js` handles the table, region selector, and the delete, duplicate and send-test modals. Duplicating goes through `/create-template?d-origin=&d-name=`.
 - `create-template.js` and `update-template.js` handle the shared form in `views/partials/template-form.html`.
+- `import-templates.js` drives the import page (`/import-templates`). It reads user-selected JSON files in the browser and creates or updates them one at a time through the existing endpoints, asking Replace/Skip on conflicts. Its validation lives in `import-validation.js`, which has no DOM access and is loaded both by the page (`window.ImportValidation`) and by `test/import-validation.test.js`.
 
 Keep these invariants:
 - The CSP forbids inline scripts and handlers, so bind events in JS, never with `onclick=` attributes. A test enforces this.

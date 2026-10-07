@@ -77,6 +77,28 @@ test('create-template accepts HTML bodies up to the SES 500KB limit', async () =
   assert.equal(fake.regions.get('us-east-1').get('big').template.HtmlPart.length, HtmlPart.length);
 });
 
+test('create-template accepts markup-heavy HTML whose URL-encoded form is far larger than 1mb', async () => {
+  const HtmlPart = '<p class="é">"é"</p>'.repeat(22000);  // ~484KB of UTF-8 (under the SES limit), ~1.14MB URL-encoded
+  assert.ok(Buffer.byteLength(HtmlPart) < 500 * 1024);
+  assert.ok(new URLSearchParams({ HtmlPart }).toString().length > 1024 * 1024);
+  const res = await app.request('/create-template', {
+    method: 'POST',
+    form: { TemplateName: 'markup', SubjectPart: 's', TextPart: 't', HtmlPart, region: 'us-east-1' }
+  });
+  assert.equal(res.status, 200);
+  assert.equal(fake.regions.get('us-east-1').get('markup').template.HtmlPart, HtmlPart);
+});
+
+test('create-template accepts a JSON body', async () => {
+  const res = await fetch(`${app.base}/create-template`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ TemplateName: 'json-body', SubjectPart: 's', TextPart: 't', HtmlPart: '<p>h</p>', region: 'us-east-1' })
+  });
+  assert.equal(res.status, 200);
+  assert.equal(fake.regions.get('us-east-1').get('json-body').template.SubjectPart, 's');
+});
+
 test('update-template replaces the stored template', async () => {
   const res = await app.request('/update-template', {
     method: 'PUT',
@@ -84,6 +106,17 @@ test('update-template replaces the stored template', async () => {
   });
   assert.equal(res.status, 200);
   assert.equal(fake.regions.get('us-east-1').get('welcome').template.SubjectPart, 'new subject');
+});
+
+test('import replace path: create reports AlreadyExists, then update replaces the template', async () => {
+  const form = { TemplateName: 'welcome', SubjectPart: 'imported', TextPart: 't', HtmlPart: '<p>i</p>', region: 'us-east-1' };
+  const create = await app.request('/create-template', { method: 'POST', form });
+  assert.equal(create.status, 500);
+  assert.equal((await create.json()).code, 'AlreadyExistsException');
+
+  const update = await app.request('/update-template', { method: 'PUT', form });
+  assert.equal(update.status, 200);
+  assert.equal(fake.regions.get('us-east-1').get('welcome').template.SubjectPart, 'imported');
 });
 
 test('delete-template removes the template', async () => {
@@ -120,7 +153,7 @@ test('invalid or missing regions are rejected before reaching SES', async () => 
 });
 
 test('pages render with all view placeholders resolved', async () => {
-  for (const [path, marker] of [['/', 'id="templateListTable"'], ['/create-template', 'id="createTemplateForm"'], ['/update-template', 'id="updateTemplateForm"']]) {
+  for (const [path, marker] of [['/', 'id="templateListTable"'], ['/create-template', 'id="createTemplateForm"'], ['/update-template', 'id="updateTemplateForm"'], ['/import-templates', 'id="importTable"']]) {
     const res = await app.request(path);
     assert.equal(res.status, 200, path);
     const html = await res.text();

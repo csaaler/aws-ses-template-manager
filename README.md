@@ -11,6 +11,7 @@ for **quick and easy reviewing, creating, updating and deleting of AWS SES templ
 
 Other useful features include:
 - SES template **duplication**.
+- **Import** several templates at once from `aws ses create-template --cli-input-json` style JSON files, with validation, renaming and replace/skip handling for existing templates.
 - Syntax highlighting for the HTML body of your emails.
 - **Send test emails** for your template including adding values for any replacement tags you may have implemented.
 - Be **notified of any newer versions** of this application to always ensure you have the latest features.

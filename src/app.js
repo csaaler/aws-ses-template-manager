@@ -23,11 +23,12 @@ function createApp({ allowedHostnames = [] } = {}) {
   app.get('/', (req, res) => res.type('html').send(renderPage('index')));
   app.get('/create-template', (req, res) => res.type('html').send(renderPage('create-template')));
   app.get('/update-template', (req, res) => res.type('html').send(renderPage('update-template')));
+  app.get('/import-templates', (req, res) => res.type('html').send(renderPage('import-templates')));
 
-  // SES templates are capped at 500KB, so 1mb leaves room for form encoding
+  // SES templates are capped at 500KB; URL-encoding can roughly triple HTML, so allow 2mb
   app.use(sameOriginOnly);
-  app.use(express.urlencoded({ extended: false, limit: '1mb' }));
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '2mb' }));
+  app.use(express.json({ limit: '2mb' }));
   app.use(templatesRouter);
 
   app.use((req, res) => {
