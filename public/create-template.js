@@ -12,7 +12,7 @@ $(document).ready(function(){
 
   if (urlParams.has('d-origin')) {
     // we need to load the existing template from which we will duplicate
-    $.get(`/get-template/${urlParams.get('d-origin')}?region=${localStorage.getItem('region')}`, function (response) {
+    $.get(templateUrl('/get-template', urlParams.get('d-origin')), function (response) {
       $('#templateName').val(urlParams.get('d-name'));
       $('#templateSubject').val(response.data.SubjectPart);
       $('#templateText').val(response.data.TextPart);
@@ -40,15 +40,12 @@ $(document).ready(function(){
   // We may not get an input event on deletion from the codeMirror editor
   window.codeMirrorEditor.on('change', () => $('#createTemplateForm button').attr('disabled', false));
 
-  const setTemplatePreview = () => {
-    const templateHtml = window.codeMirrorEditor.getValue();
-    $('#templatePreview').html(templateHtml);
-  };
+  const refreshTemplatePreview = () => setTemplatePreview(window.codeMirrorEditor.getValue());
 
   const handlePreview = () => {
     const showPreview = $('#templatePreviewContainer')[0].checkVisibility();
     if (!showPreview) return;
-    setTemplatePreview();
+    refreshTemplatePreview();
   }
 
   // We may not get an input event on deletion from the codeMirror editor
@@ -63,8 +60,8 @@ $(document).ready(function(){
     const newValue = e.target.checked;
     const changeVisibility = newValue ? 'show' : 'hide';
     $('#templatePreviewContainer')[changeVisibility]();
-    if (newValue) return setTemplatePreview();
-    $('#templatePreview').html('');
+    if (newValue) return refreshTemplatePreview();
+    setTemplatePreview('');
   });
 
   // handle form submissions
@@ -88,12 +85,12 @@ $(document).ready(function(){
       },
       error: function(xhr) {
         let content;
-        if (xhr.responseJSON.message) {
+        if (xhr.responseJSON?.message) {
           content = xhr.responseJSON.message;
         } else {
           content = "Error saving template. Please try again";
         }
-        $('#errContainer').html(content).removeClass('d-none');
+        $('#errContainer').text(content).removeClass('d-none');
       }
     });
   });

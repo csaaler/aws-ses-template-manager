@@ -32,3 +32,9 @@
 .col-form-label {
   overflow-wrap: break-word;
 }
+
+#templatePreview {
+  width: 100%;
+  min-height: 150px;
+  border: 1px solid #e6e6e6;
+}

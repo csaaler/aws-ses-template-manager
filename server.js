@@ -1,25 +1,25 @@
 'use strict'
 
-/*
-|--------------------------------------------------------------------------
-| Http server
-|--------------------------------------------------------------------------
-|
-| This file bootstrap Adonisjs to start the HTTP server. You are free to
-| customize the process of booting the http server.
-|
-| """ Loading ace commands """
-|     At times you may want to load ace commands when starting the HTTP server.
-|     Same can be done by chaining `loadCommands()` method after
-|
-| """ Preloading files """
-|     Also you can preload files by calling `preLoad('path/to/file')` method.
-|     Make sure to pass relative path from the project root.
-*/
+const fs = require('fs');
+const path = require('path');
 
-const { Ignitor } = require('@adonisjs/ignitor')
+const envFile = path.join(__dirname, '.env');
+if (fs.existsSync(envFile)) process.loadEnvFile(envFile);
 
-new Ignitor(require('@adonisjs/fold'))
-  .appRoot(__dirname)
-  .fireHttpServer()
-  .catch(console.error)
+const { createApp } = require('./src/app');
+const { LOOPBACK_HOSTNAMES } = require('./src/security');
+
+const host = process.env.HOST || '127.0.0.1';
+const port = Number(process.env.PORT) || 3333;
+const allowedHostnames = [
+  host,
+  ...(process.env.ALLOWED_HOSTS || '').split(',').map(h => h.trim()).filter(Boolean)
+];
+
+if (!LOOPBACK_HOSTNAMES.includes(host)) {
+  console.warn(`WARNING: listening on ${host}. Anyone who can reach this address can manage and send SES templates with your AWS credentials.`);
+}
+
+createApp({ allowedHostnames }).listen(port, host, () => {
+  console.log(`AWS SES Template Manager running at http://${host}:${port} (AWS profile '${process.env.AWS_PROFILE_NAME || 'default'}')`);
+});

@@ -33,15 +33,25 @@ Create/Update template:
 
 ## Tech / framework used
 
-- AdonisJS
-- Bootstrap 4
+- Node.js (>= 20.12) + Express 5
+- AWS SDK for JavaScript v3
+- Bootstrap 4 / jQuery / CodeMirror 5
 
 ## Installation
 - Ensure to have [setup your AWS credentials](https://docs.aws.amazon.com/sdk-for-java/v1/developer-guide/setup-credentials.html) on your machine.
 - git clone this project repo.
 - ```npm install```
 - Ensure 'AWS_PROFILE_NAME' within the **.env file** is set to your desired aws named profile. Also ensure for the named profile chosen that all applicable permissions are granted to allow for creating, retrieving, updating, deleting and sending SES templates.
-- ```adonis serve --dev``` will run the application.
+- ```npm start``` will run the application (```npm run dev``` restarts it on file changes).
+- ```npm test``` runs the test suite, and ```npm run dev:mock``` runs the app against an in-memory fake SES (no AWS access needed).
+
+## Security
+The app has no login of its own: anyone who can reach it can manage and send templates with your AWS credentials. It therefore
+- only accepts requests addressed to `HOST`/localhost (protects against DNS rebinding) and rejects API calls made by other websites (CSRF),
+- renders template previews in a sandboxed iframe, so template HTML can't run scripts in the app,
+- rate limits test email sending to 30 per minute.
+
+Keep `HOST=127.0.0.1`, and use an AWS profile limited to the SES template permissions you need (`ses:ListTemplates`, `ses:GetTemplate`, `ses:CreateTemplate`, `ses:UpdateTemplate`, `ses:DeleteTemplate`, `ses:SendTemplatedEmail`).
 
 ## How to use
 Once installation steps have been followed, navigate to http://127.0.0.1:3333 (host and port can be changed via the .env file if required).
@@ -58,7 +68,8 @@ up to date with new features etc.
 
 You can easily get the latest changes by:
 - running the command: ```git pull```
-- stop and restarting adonis (```adonis serve --dev```)
+- running ```npm install```
+- stopping and restarting the app (```npm start```)
 - closing and re-opening your local browser tab
 
 You can click on the 'new version available' button to access the newer versions release notes.

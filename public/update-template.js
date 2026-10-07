@@ -13,12 +13,9 @@ $(document).ready(() => {
     viewportMargin: Infinity
   });
 
-  const setTemplatePreview = () => {
-    const templateHtml = window.codeMirrorEditor.getValue();
-    $('#templatePreview').html(templateHtml);
-  };  
+  const refreshTemplatePreview = () => setTemplatePreview(window.codeMirrorEditor.getValue());  
 
-  $.get(`/get-template/${templateName}?region=${localStorage.getItem('region')}`, function (response) {
+  $.get(templateUrl('/get-template', templateName), function (response) {
     $('#templateName').val(response.data.TemplateName);
     $('#templateSubject').val(response.data.SubjectPart);
     $('#templateText').val(response.data.TextPart);
@@ -28,7 +25,7 @@ $(document).ready(() => {
 
     $('#updateTemplateForm').removeClass('d-none'); //show the form only when we have pre-populated all inputs
     window.codeMirrorEditor.refresh();  //must be called to re draw the code editor
-    setTemplatePreview();
+    refreshTemplatePreview();
   });
 
   $('#alwaysFullyRenderCodeEditor').on('change', (e) => {
@@ -55,7 +52,7 @@ $(document).ready(() => {
   const handlePreview = () => {
     const showPreview = $('#templatePreviewContainer')[0].checkVisibility();
     if (!showPreview) return;
-    setTemplatePreview();
+    refreshTemplatePreview();
   };
 
   $('#updateTemplateForm').on('input', (e) => {
@@ -70,8 +67,8 @@ $(document).ready(() => {
     const newValue = e.target.checked;
     const changeVisibility = newValue ? 'show' : 'hide';
     $('#templatePreviewContainer')[changeVisibility]();
-    if (newValue) return setTemplatePreview();
-    $('#templatePreview').html('');
+    if (newValue) return refreshTemplatePreview();
+    setTemplatePreview('');
   });
 
   $('#updateTemplateForm').submit(function(e){
@@ -93,12 +90,12 @@ $(document).ready(() => {
       },
       error: function(xhr) {
         let content;
-        if (xhr.responseJSON.message) {
+        if (xhr.responseJSON?.message) {
           content = xhr.responseJSON.message;
         } else {
           content = "Error updating template. Please try again";
         }
-        $('#errContainer').html(content).removeClass('d-none');
+        $('#errContainer').text(content).removeClass('d-none');
       }
     });
   });
